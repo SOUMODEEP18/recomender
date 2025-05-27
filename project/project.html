@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Movie Recommender</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      text-align: center;
+      background-color: rgb(0, 0, 14);
+      background-image: url("ChatGPT Image May 5, 2025, 11_58_37 AM.png");
+      background-size: 400px 600px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .movies {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 30px;
+      margin-top: 20px;
+      color: rgb(212, 228, 241);
+      font-size: 20px;
+    }
+
+    .movie {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 20px;
+      width: 80%;
+      background-color: rgba(255, 255, 255, 0.05);
+      padding: 20px;
+      border-radius: 15px;
+    }
+
+    .movie img {
+      width: 150px;
+      border-radius: 10px;
+      box-shadow: 4px 4px 4px 4px black;
+    }
+
+    .heading {
+      font-size: 30px;
+      color: rgb(236, 237, 249);
+      padding-top: 10px;
+    }
+
+    input[type="text"] {
+      font-size: 18px;
+      padding: 10px;
+      width: 400px;
+      border-radius: 10px;
+    }
+
+    .button button {
+      color: aliceblue;
+      font-size: 18px;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      background-color: rgb(95, 12, 12);
+    }
+
+    .recommendbox {
+      background-color: rgb(2, 17, 31);
+      
+      background-size: 300px 300px;
+      background-repeat: repeat-x;
+      border-radius: 30px;
+      box-shadow: 10px 10px 10px 10px black;
+      padding: 30px;
+      width: 85%;
+    }
+
+    hr {
+      width: 100%;
+      border: 1px solid white;
+      margin: 30px 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="recommendbox">
+    <div class="heading">
+      <h1>Movie Recommender System</h1>
+    </div>
+
+    <input type="text" id="movieInput" placeholder="Enter a movie title" />
+    <br><br>
+    <div class="button">
+      <button onclick="getRecommendations()">Show Recommendation</button>
+    </div>
+
+    <div class="movies" id="recommendations"></div>
+
+    <script>
+      async function getRecommendations() {
+        const movie = document.getElementById("movieInput").value.trim();
+        const container = document.getElementById("recommendations");
+        container.innerHTML = '';
+
+        if (!movie) {
+          container.innerHTML = '<div style="color: white; font-size: 20px;padding-bottom: 35px;">Please enter a movie title</div>';
+          return;
+        }
+
+        try {
+          const res = await fetch("http://127.0.0.1:5000/recommend", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ movie: movie })
+          });
+
+          const data = await res.json();
+
+          // Show searched movie with overview
+          const searchedDiv = document.createElement("div");
+          searchedDiv.className = "movie";
+          searchedDiv.innerHTML = `
+            <div>
+              <h3 style="color:lightgreen;">The Match</h3>
+              <img src="${data.searched.poster}" />
+              <p style="margin-top: 20px; font-size: 18px;color: lightblue;">${data.searched.title}</p>
+            </div>
+            <div style="max-width: 600px; padding-left:45px; color: white; text-align: left; font-size: 25px; line-height: 1.5;">
+              <h4 style="color: lightblue;">Description</h4>
+              <p style="font-family: Arial, sans-serif">${data.searched.overview}</p>
+              <h4 style="color: lightblue;">Genres</h4>
+              <p style="font-family: Arial, sans-serif">${data.searched.genres.map(g => g.name).join(", ")}</p>
+              <h4 style="color: lightblue;">Rating</h4>
+              <p style="font-family: Arial, sans-serif">${data.searched.vote_average}/10</p>
+            </div>
+          `;
+          container.appendChild(searchedDiv);
+
+          // Recommendations heading
+          const heading = document.createElement("div");
+          heading.innerHTML = `<h3 style="color:lightgreen;">Recommended Movies Similar to "${data.searched.title}, ${data.searched.genres.map(g => g.name).join(", ")}"</h3>`;
+          container.appendChild(heading);
+
+          // Recommended movies
+          const recommendationsContainer = document.createElement("div");
+          recommendationsContainer.style.display = "flex";
+          recommendationsContainer.style.flexWrap = "wrap";
+          recommendationsContainer.style.justifyContent = "center";
+          recommendationsContainer.style.gap = "20px";
+
+          data.recommended.forEach(item => {
+            const div = document.createElement("div");
+            div.className = "movie";
+            div.style.flexDirection = "column";
+            div.style.alignItems = "center";
+            div.style.width = "150px";
+            div.innerHTML = `<img src="${item.poster}" /><p style="margin-top: 10px;color: lightblue;">${item.title}</p><p>${item.overview}</p><p>${item.vote_average}/10</p>`;
+            recommendationsContainer.appendChild(div);
+          });
+
+          container.appendChild(recommendationsContainer);
+
+        } catch (error) {
+          container.innerHTML = '<div style="color: red; font-size: 20px; padding-bottom: 35px">No Result Found</div>';
+          console.error("Fetch error:", error);
+        }
+      }
+    </script>
+  </div>
+</body>
+
+</html>
